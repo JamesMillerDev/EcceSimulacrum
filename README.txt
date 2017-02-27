@@ -1,1 +1,3 @@
 For gameplay video, see https://www.youtube.com/watch?v=tbdBhSmV2u0&list=PLaEE0ByXO_oIivOQZxjV-ZUC7KYW5f75_
+
+(watch in HD!)
