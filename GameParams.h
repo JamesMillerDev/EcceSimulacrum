@@ -11,6 +11,7 @@
 //General parameters
 const float PI = 3.14159265;
 const float FRAMES_PER_SECOND = 60.0;
+const bool DEBUG = false;
 
 //Window parameters
 const int INITIAL_WINDOW_X = 0;
@@ -27,7 +28,7 @@ const float INITIAL_WALKING_Y = 80.0; //80
 const float INITIAL_WALKING_Z = -175.260544; //0 //-90
 const float INITIAL_VERT_ANGLE = .73999;//.73999;  //pi/2
 const float INITIAL_HORIZ_ANGLE = -.40999;//-.40999;
-const float WALK_SPEED = 10.0; //20.0;
+const float WALK_SPEED = 7.0; //20.0;
 const float WALK_ACCELERATION = 0.93;//1.133;
 const float JUMP_SPEED = 10.0;
 const float JUMP_ACCELERATION = -1.0;
@@ -57,9 +58,11 @@ const int DENIAL_WIDTH_OFFSET = 7;//4
 
 //Desktop parameters
 const float ALPHA_INCREMENT = 0.05;
+const int WINDOW_TITLE_HEIGHT = 30; //36
+const int BROWSER_TOOLBAR_HEIGHT = 38; //44
 
 //Power button parameters
-const int POWER_BUTTON_MS_TO_FRAME_CHANGE = 40;
+const int POWER_BUTTON_MS_TO_FRAME_CHANGE = 10;
 const int POWER_BUTTON_MAX_FRAMES = 6;
 
 //Text field parameters

@@ -16,6 +16,12 @@ void PowerSymbol::mouse_off()
 
 void PowerSymbol::mouse_clicked(int button, int state, int x, int y)
 {
+	if (parent->the_end)
+		return;
+
+	if (parent->everything_stuck)
+		parent->power_bucket++;
+	
 	if (state != GLUT_DOWN)
 		return;
 
@@ -24,7 +30,7 @@ void PowerSymbol::mouse_clicked(int button, int state, int x, int y)
 
 void PowerSymbol::animate()
 {
-	int current_time = glutGet(GLUT_ELAPSED_TIME);
+	/*int current_time = glutGet(GLUT_ELAPSED_TIME);
 	if (current_time - timebase >= POWER_BUTTON_MS_TO_FRAME_CHANGE)
 	{
 		if (mouse_on && current_frame < POWER_BUTTON_MAX_FRAMES)
@@ -37,5 +43,13 @@ void PowerSymbol::animate()
 		ss << current_frame;
 		name = "powersymbol" + ss.str() + ".png";
 		timebase = current_time;
-	}
+	}*/
+
+	if (parent->the_end)
+		name = "blackwhitebutton.png";
+
+	if (mouse_on)
+		name = "powersymbol2.png";
+
+	else name = "powersymbol1.png";
 }

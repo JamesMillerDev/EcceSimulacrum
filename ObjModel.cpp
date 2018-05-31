@@ -31,6 +31,21 @@ std::vector<std::string> split(const std::string &s, char delim) {
 	split(s, delim, elems, ss, item);
 	return elems;
 }
+
+std::vector<std::string> real_split(const std::string &s, char delim)
+{
+	auto elems = split(s, delim);
+	std::vector<std::string> retval;
+	for (int i = 0; i < elems.size(); ++i)
+	{
+		if (elems[i] == "q")
+			break;
+
+		retval.push_back(elems[i]);
+	}
+
+	return retval;
+}
 ///////////
 
 std::string get_file_contents(const char *filename)
@@ -126,6 +141,8 @@ void ObjModel::load_file(string file_name)
 			texture_switch_faces.push_back(face_index);
 	}
 
+	glEnable(GL_MULTISAMPLE);
+	glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 	glNewList(display_list, GL_COMPILE);
 	int current_texture = -1;
 	int switch_face_index = 0;

@@ -4,7 +4,7 @@
 enum Keys
 {
 	KEY_BACKSPACE = 8,
-	KEY_LEFT,
+	KEY_LEFT = 20,
 	KEY_UP,
 	KEY_RIGHT,
 	KEY_DOWN,

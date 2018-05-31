@@ -56,11 +56,12 @@ struct Slideshow : public ScreenElement
 
 	void animate_to(int slide)
 	{
+		int mid = (x1 + x2) / 2.0;
 		frames = 0;
 		cur_slide = slide;
 		target_offset = cur_slide * (x2 - x1);
-		circle->x1 = 582 + slide * 84;
-		circle->x2 = circle->x1 + 32;
+		circle->x1 = slide * 30 + (mid - 60);
+		circle->x2 = circle->x1 + 10;
 		animating = true;
 	}
 

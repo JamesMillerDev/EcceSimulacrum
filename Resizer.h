@@ -23,6 +23,7 @@ struct Resizer : public ScreenElement
 		if (state == GLUT_DOWN)
 		{
 			mouse_held = true;
+			canvas->being_resized = true;
 			return;
 		}
 
@@ -30,6 +31,7 @@ struct Resizer : public ScreenElement
 		if (state == GLUT_UP)
 		{
 			mouse_held = false;
+			canvas->being_resized = false;
 			return;
 		}
 	}
@@ -56,7 +58,7 @@ struct Resizer : public ScreenElement
 
 	void mouse_over(int x, int y)
 	{
-		glutSetCursor(GLUT_CURSOR_WAIT);
+		parent->set_cursor("cursorhand.png");
 		parent->maintain_cursor = true;
 		i_changed_cursor = true;
 	}
@@ -65,7 +67,7 @@ struct Resizer : public ScreenElement
 	{
 		if (!mouse_held && i_changed_cursor)
 		{
-			glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
+			parent->set_cursor("cursor.png");
 			parent->maintain_cursor = false;
 			i_changed_cursor = false;
 		}
@@ -76,7 +78,7 @@ struct Resizer : public ScreenElement
 		has_focus = false;
 		if (i_changed_cursor)
 		{
-			glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
+			parent->set_cursor("cursor.png");
 			parent->maintain_cursor = false;
 			i_changed_cursor = false;
 		}
@@ -95,6 +97,7 @@ struct Resizer : public ScreenElement
 			canvas->resize(canvas->x1, canvas->y1 + dy, canvas->x2 + dx, canvas->y2);
 
 		dx = dy = 0;
+		canvas->being_resized = false;
 	}
 
 	void animate()
@@ -103,24 +106,24 @@ struct Resizer : public ScreenElement
 		{
 			x1 = canvas->x2 + 2;
 			y1 = (canvas->y2 - canvas->y1) / 2 + canvas->y1;
-			x2 = x1 + 3;
-			y2 = y1 + 3;
+			x2 = x1 + 5;
+			y2 = y1 + 5;
 		}
 
 		else if (mode == 1)
 		{
 			x1 = (canvas->x2 - canvas->x1) / 2 + canvas->x1;
 			y1 = canvas->y1 - 5;
-			x2 = x1 + 3;
-			y2 = y1 + 3;
+			x2 = x1 + 5;
+			y2 = y1 + 5;
 		}
 
 		else if (mode == 2)
 		{
 			x1 = canvas->x2 + 2;
 			y1 = canvas->y1 - 5;
-			x2 = x1 + 3;
-			y2 = y1 + 3;
+			x2 = x1 + 5;
+			y2 = y1 + 5;
 		}
 	}
 
@@ -129,6 +132,7 @@ struct Resizer : public ScreenElement
 		ScreenElement::draw(texture_manager);
 		if (mouse_held)
 		{
+			glDisable(GL_MULTISAMPLE);
 			int temp_dx = dx;
 			int temp_dy = dy;
 			if (mode == 0)
@@ -148,6 +152,7 @@ struct Resizer : public ScreenElement
 			glColor4f(1.0, 1.0, 1.0, 1.0);
 			dx = temp_dx;
 			dy = temp_dy;
+			glEnable(GL_MULTISAMPLE);
 		}
 	}
 };

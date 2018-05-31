@@ -2,10 +2,12 @@
 #define RADIO_BUTTON
 
 #include "Computer.h"
+#include "ScrollPanel.h"
 
 struct RadioButton : public ScreenElement
 {
 	Computer* parent;
+	ScrollPanel* scroll_panel;
 	bool selected = false;
 	bool cur_sheen = false;
 	bool mouse_held = false;
@@ -13,7 +15,7 @@ struct RadioButton : public ScreenElement
 	std::vector<RadioButton*> children;
 	static int consecutive_selections;
 	static int previous_click_time;
-	RadioButton(float _x1, float _y1, float _x2, float _y2, string _name, Computer* _parent, Application _application, RadioButton* _master = NULL) : ScreenElement(_x1, _y1, _x2, _y2, _name, _application), parent(_parent), master(_master) 
+	RadioButton(float _x1, float _y1, float _x2, float _y2, string _name, Computer* _parent, Application _application, RadioButton* _master = NULL, ScrollPanel* _scroll_panel = NULL) : ScreenElement(_x1, _y1, _x2, _y2, _name, _application), parent(_parent), master(_master), scroll_panel(_scroll_panel)
 	{
 		if (master == NULL)
 			master = this;
@@ -29,6 +31,9 @@ struct RadioButton : public ScreenElement
 
 	void mouse_clicked(int button, int state, int x, int y)
 	{
+		if (button != GLUT_LEFT)
+			return;
+		
 		if (state == GLUT_DOWN)
 			mouse_held = true;
 
@@ -37,7 +42,7 @@ struct RadioButton : public ScreenElement
 			if (!has_selection())
 			{
 				int cur_time = glutGet(GLUT_ELAPSED_TIME);
-				if (previous_click_time == -1 || cur_time - previous_click_time < 700) //TODO change to 2000 to reactivate
+				if (previous_click_time == -1 || cur_time - previous_click_time < 2000) //TODO change to 2000 to reactivate
 				{
 					previous_click_time = cur_time;
 					consecutive_selections++;
@@ -46,8 +51,11 @@ struct RadioButton : public ScreenElement
 				if (consecutive_selections >= 5)
 				{
 					consecutive_selections = 0;
-					parent->start_application(INFO_BOX, "You're going too fast!");
+					if (scroll_panel != NULL)
+						scroll_panel->make_popup("You're going too fast!");
 				}
+
+				previous_click_time = cur_time;
 			}
 
 			master->revoke_selection();
@@ -83,9 +91,15 @@ struct RadioButton : public ScreenElement
 
 		if (selected)
 		{
-			ScreenElement bubble = ScreenElement(x1 + 8, y1 + 8, x2 - 8, y2 - 8, "blackdot.png", application);
+			ScreenElement bubble = ScreenElement(x1 + 4, y1 + 4, x2 - 5, y2 - 5, "blackdot.png", application);
 			bubble.draw(texture_manager);
 		}
+	}
+
+	void take_focus()
+	{
+		ScreenElement::take_focus();
+		mouse_held = false;
 	}
 
 	void mouse_over(int x, int y)

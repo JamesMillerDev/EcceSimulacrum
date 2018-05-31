@@ -16,7 +16,6 @@ private:
 	vector<Vector3> tex_coords;
 	vector<Vector3> normals;
 	vector<vector<Vector3> > faces;
-	vector<string> textures;
 	vector<int> texture_switch_faces;
 	TextureManager* texture_manager;
 	GLuint display_list;
@@ -27,8 +26,10 @@ public:
 	void add_texture(string texture);
 	void load_file(string file_name);
 	void reserve(int num_faces);
+	vector<string> textures;
 };
 
 std::vector<std::string> split(const std::string &s, char delim);
+std::vector<std::string> real_split(const std::string &s, char delim);
 
 #endif

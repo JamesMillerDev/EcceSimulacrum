@@ -5,6 +5,7 @@
 #include "HelpCenter.h"
 #include "XButton.h"
 #include "InfoText.h"
+#include "Canvas.h"
 #include "keymappings.h"
 
 bool inside(ScreenElement s1, ScreenElement s2)
@@ -13,36 +14,43 @@ bool inside(ScreenElement s1, ScreenElement s2)
 }
 
 //TODO probably doesn't work in-browser right now
-MMO::MMO(float _x1, float _y1, float _x2, float _y2, string _name, string initial_level, Computer* _parent, Application _application) : ScreenElement(_x1, _y1, _x2, _y2, _name, _application), parent(_parent)
+MMO::MMO(float _x1, float _y1, float _x2, float _y2, string _name, string initial_level, Computer* _parent, Application _application) : ScreenElement(_x1, _y1, _x2, _y2, _name, _application), parent(_parent), ladder_box(ScreenElement(0, 0, 0, 0, ""))
 {
+	walk_speed = 5;
 	warped = false;
-	player = ScreenElement(950.0, 530.0, 950 + 114.0, 530.0 + 133.0, "frame1.png");
+	chat_height = 150;
+	//player = ScreenElement(950.0, 530.0, 950 + 114.0, 530.0 + 133.0, "frame1.png");
+	player = Character(0, 0, 14, 22, "main");
 	animated_components.push_back(ScreenElement(0.0, 100.0, 150.0, 150.0, "river1.png"));
 	animated_components.push_back(ScreenElement(100.0, 200.0, 300.0, 300.0, "river2.png"));
 	animated_components.push_back(ScreenElement(1000.0, 150.0, 1150.0, 200.0, "river1.png"));
 	animated_components.push_back(ScreenElement(1500.0, 300.0, 1700.0, 400.0, "river2.png"));
 	animated_components.push_back(ScreenElement(-200.0, 200.0, -50.0, 250.0, "river1.png"));
-	//load_level("mmo.txt");
-	current_level = initial_level;
-	load_level(initial_level);
 	if (current_level == "mmo.txt")
 		no_movement = true;
 
 	else no_movement = false;
 	zoom_animation = false;
 
-	/*auto help_center = make_unique<HelpCenter>(0.0, 56.0, 1900.0, 200.0, "white.png", parent, application);
-	parent->to_be_added.insert(parent->to_be_added.end() - 2, std::move(help_center)); what in the ever loving fuck, why was this here?*/
+	//auto help_center = make_unique<HelpCenter>(0.0, 56.0, 1900.0, 200.0, "white.png", parent, application);
+	//parent->to_be_added.insert(parent->to_be_added.end() - 2, std::move(help_center)); we insert MMO at top of list after it's constructed
 
-	app_state = 0;
+	app_state = 1; //TODO switch back to 0 for password screen
+	current_level = initial_level;
+	load_level(initial_level);
 }
 
 void MMO::load_level(string file_name)
 {
+	int start_x, start_y;
 	background_images.clear();
 	bounding_boxes.clear();
+	warp_boxes.clear();
+	scrolling_messages.clear();
 	ifstream file_stream(file_name);
 	string line;
+	bool has_sp = false;
+	current_level = file_name;
 	while (getline(file_stream, line))
 	{
 		vector<string> components = split(line, ' ');
@@ -50,23 +58,139 @@ void MMO::load_level(string file_name)
 			background_images.push_back(ScreenElement(atof(components[1].c_str()), atof(components[2].c_str()), atof(components[3].c_str()), atof(components[4].c_str()), components[5]));
 
 		else if (components[0] == "sp")
-			player.translate(atof(components[1].c_str()) - player.x1, atof(components[2].c_str()) - player.y1);
+		{
+			has_sp = true;
+			start_x = atoi(components[1].c_str());
+			start_y = atoi(components[2].c_str());
+		}
 
 		else if (components[0] == "warp")
 			warp_boxes.push_back(ScreenElement(atof(components[1].c_str()), atof(components[2].c_str()), atof(components[3].c_str()), atof(components[4].c_str()), components[5]));
 
+		else if (components[0] == "ladder")
+			bounding_boxes.push_back(ScreenElement(atof(components[1].c_str()), atof(components[2].c_str()), atof(components[3].c_str()), atof(components[4].c_str()), "ladder"));
+
 		else
-			bounding_boxes.push_back(ScreenElement(atof(components[0].c_str()), atof(components[1].c_str()), atof(components[2].c_str()), atof(components[3].c_str()), ""));
+			bounding_boxes.push_back(ScreenElement(atof(components[1].c_str()), atof(components[2].c_str()), atof(components[3].c_str()), atof(components[4].c_str()), ""));
 	}
+
+	if (file_name == "testboxes.txt")
+		load_additional_boxes("testboxes.png");
+
+	if (file_name == "underground.txt")
+		load_additional_boxes("undergroundadd.png");
+
+	background_images[0].translate(0, chat_height);
+	for (int i = 0; i < warp_boxes.size(); ++i)
+		warp_boxes[i].translate(0, chat_height);
+
+	for (int i = 0; i < bounding_boxes.size(); ++i)
+		bounding_boxes[i].translate(0, chat_height);
 
 	left_bottom = &(background_images[0]);
 	right_top = &(background_images[background_images.size() - 1]);
+	if (has_sp)
+	{
+		moving_stage_x = false;
+		moving_stage_y = false;
+		ignore_collision = true;
+		player.translate(0 - player.x1, 0 - player.y1);
+		for (int i = 0; i < start_x / 15; ++i)
+			process_key('d');
+
+		for (int i = 0; i < start_y / 15; ++i)
+			process_key('w');
+
+		ignore_collision = false;
+	}
+}
+
+void MMO::load_additional_boxes(string texture_name)
+{
+	GLubyte* pixels = parent->texture_manager->get_pixel_data(texture_name);
+	int width = parent->texture_manager->get_width(texture_name);
+	int height = parent->texture_manager->get_height(texture_name);
+	Canvas canvas = Canvas(0, 0, width, height, "", NULL, NONE);
+	canvas.image = pixels;
+	ScreenElement current_box = ScreenElement(-1, -1, -1, -1, "");
+	vector<ScreenElement> candidate_boxes;
+	for (int j = 0; j < height; ++j)
+	{
+		for (int i = 0; i < width; ++i)
+		{
+			if (i == 4365 && j == 3355)
+			{
+				int q = 1;
+			}
+
+			if (i == 4365 && j == 3354)
+			{
+				int q = 1;
+			}
+
+			int step1 = j * (canvas.x2 - canvas.x1) * 4;
+			int step2 = i * 4;
+			int start = step1 + step2;
+			GLubyte colorx = canvas.image[start];
+			GLubyte colory = canvas.image[start + 1];
+			GLubyte colorz = canvas.image[start + 2];
+			if (colorx == 0 && colory == 0 && colorz == 255)
+			{
+				if (current_box.x1 == -1)
+				{
+					current_box.x1 = i;
+					current_box.y1 = j;
+					current_box.x2 = i + 1;
+					current_box.y2 = j + 1;
+				}
+
+				else
+					current_box.x2++;
+			}
+
+			else
+			{
+				if (current_box.x1 != -1)
+				{
+					candidate_boxes.push_back(current_box);
+					current_box.x1 = current_box.x2 = current_box.y1 = current_box.y2 = -1;
+				}
+			}
+		}
+
+		if (current_box.x1 != -1)
+		{
+			candidate_boxes.push_back(current_box);
+			current_box.x1 = current_box.x2 = current_box.y1 = current_box.y2 = -1;
+		}
+	}
+
+	vector<ScreenElement> final_boxes;
+	for (int i = 0; i < candidate_boxes.size(); ++i)
+	{
+		bool extended_box = false;
+		for (int j = 0; j < final_boxes.size(); ++j)
+		{
+			auto box = candidate_boxes[i];
+			auto glob = final_boxes[j];
+			if (box.x1 == glob.x1 && box.x2 == glob.x2 && box.y1 == glob.y2)
+			{
+				final_boxes[j].y2++;
+				extended_box = true;
+			}
+		}
+
+		if (!extended_box)
+			final_boxes.push_back(candidate_boxes[i]);
+	}
+
+	bounding_boxes.insert(bounding_boxes.end(), final_boxes.begin(), final_boxes.end());
 }
 
 //TODO make sure you can't click on other stuff
 void MMO::mouse_moved(int x, int y)
 {
-	if (current_level == "mmo.txt")
+	if (current_level == "mmo.txt" || current_level == "underground.txt")
 	{
 		if (warped)
 			warped = false;
@@ -74,7 +198,8 @@ void MMO::mouse_moved(int x, int y)
 		else
 		{
 			warped = true;
-			glutWarpPointer(player.x1 + 10, glutGet(GLUT_WINDOW_HEIGHT) - (player.y1 + 20));
+			//glutWarpPointer(player.x1 + 10, glutGet(GLUT_WINDOW_HEIGHT) - (player.y1 + 20));
+			glutWarpPointer(500, 500);
 		}
 	}
 }
@@ -100,10 +225,40 @@ void MMO::draw(TextureManager* texture_manager)
 	glStencilMask(0x00);
 	glStencilFunc(GL_EQUAL, 1, 0xFF);*/
 	glPushMatrix();
-	glScalef(scale_x, scale_y, 1.0);
+	parent->set_cursor("invisible.png");
+	parent->someone_set_cursor = true;
+	if (zoom_animation) //draw zoom
+	{
+		float tx1 = glutGet(GLUT_WINDOW_WIDTH) / 2 - (ladder_box.x1 + (ladder_box.x2 - ladder_box.x1) / 2.0);
+		float ty1 = glutGet(GLUT_WINDOW_HEIGHT) / 2 - (ladder_box.y1 + (ladder_box.y2 - ladder_box.y1) / 2.0);
+		if (player_to_center_x != 0)
+			player.translate(copysign(2, player_to_center_x), 0);
+
+		if (player_to_center_y != 0)
+			player.translate(0, copysign(2, player_to_center_y));
+
+		if (percent_of_centering != 1.0)
+		{
+			background_images[0].translate(tx1 * 0.02, ty1 * 0.02);
+			player.translate(tx1 * 0.02, ty1 * 0.02);
+		}
+
+		glScalef(scale_x, scale_y, 1.0);
+		glTranslatef(-960.0 * (scale_x - 1) / scale_x, -540.0 * (scale_y - 1) / scale_y, 0.0);
+	}
+
 	ScreenElement::draw(texture_manager);
 	for (int i = 0; i < background_images.size(); ++i)
+	{
 		background_images[i].draw(texture_manager);
+		if (current_level != "mmo.txt" && current_level != "testboxes.txt" && current_level != "underground.txt")
+		{
+			string old_name = background_images[i].name;
+			background_images[i].name = real_split(old_name, '.')[0] + "overlay.png";
+			background_images[i].draw(texture_manager);
+			background_images[i].name = old_name;
+		}
+	}
 
 	/*ScreenElement river = ScreenElement(0.0, 56.0, 1920.0, 616.0, "river.png");
 	river.draw(texture_manager);*/
@@ -115,14 +270,43 @@ void MMO::draw(TextureManager* texture_manager)
 			scrolling_messages[i].draw(texture_manager);
 	}
 
-	if (current_level != "mmo.txt")
-		player.draw(texture_manager);
+	glPopMatrix();
+
+	//if (current_level != "mmo.txt" && current_level != "underground.txt")
+	string old_name = player.name;
+	player.name = "cursor.png";
+	player.draw(texture_manager);
+	player.name = old_name;
+	
 	ScreenElement loading_screen = ScreenElement(0.0, 0.0, scalex(1920.0), scaley(1080.0), "black.png");
 	glColor4f(1.0, 1.0, 1.0, warping_alpha);
 	loading_screen.draw(texture_manager);
 	glColor4f(1.0, 1.0, 1.0, 1.0);
-	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
+	glColor4f(1.0, 0.0, 0.0, 1.0);
+	/*for (int i = 0; i < bounding_boxes.size(); ++i)
+	{
+		glRectf(bounding_boxes[i].x1, bounding_boxes[i].y1, bounding_boxes[i].x2, bounding_boxes[i].y2);
+		glEnable(GL_TEXTURE_2D);
+		glColor4f(1.0, 1.0, 1.0, 1.0);
+		draw_string(texture_manager, 32, "bb" + to_string(i), bounding_boxes[i].x1 + 10, bounding_boxes[i].y1 + 10);
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(1.0, 0.0, 0.0, 1.0);
+	}*/
+
+	glColor4f(1.0, 1.0, 1.0, 1.0);
+	glEnable(GL_TEXTURE_2D);
 	//glDisable(GL_STENCIL_TEST);
+
+	/*glBegin(GL_LINES);
+		glColor4f(0.0, 0.0, 0.0, 1.0);
+		glVertex2f(glutGet(GLUT_WINDOW_WIDTH) / 2.0, 0.0);
+		glVertex2f(glutGet(GLUT_WINDOW_WIDTH) / 2.0, glutGet(GLUT_WINDOW_HEIGHT));
+		glVertex2f(0.0, glutGet(GLUT_WINDOW_HEIGHT) / 2.0);
+		glVertex2f(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT) / 2.0);
+		glColor4f(1.0, 1.0, 1.0, 1.0);
+	glEnd();*/
 }
 
 void MMO::translate_stage(float delta_x, float delta_y)
@@ -140,8 +324,34 @@ void MMO::translate_stage(float delta_x, float delta_y)
 		scrolling_messages[i].translate(delta_x, delta_y);
 }
 
-//TODO bottom of map is cut off
 void MMO::press_key(unsigned char key)
+{
+	if (key == 'k')
+	{
+		for (int i = 0; i < 500; ++i)
+			load_level("underground.txt");
+
+		return;
+	}
+
+	if (key == 'q')
+	{
+		parent->close_application(MMO_GAME);
+		return;
+	}
+
+	keys_pressed[key] = true;
+}
+
+void MMO::release_key(unsigned char key)
+{
+	keys_pressed[key] = false;
+}
+
+//TODO bottom of map is cut off
+//TODO underground.txt, get stuck on bounding box off by one, 950 and 951
+//TODO clicking during zooming does weird stuff, disable sword there
+void MMO::process_key(unsigned char key)
 {
 	if (app_state == 0)
 		return;
@@ -149,57 +359,38 @@ void MMO::press_key(unsigned char key)
 	if (no_movement)
 		return;
 	
-	animation_counter++;
-	if (animation_counter % 10 == 0)
-		player.name = frame1;
-
-	else if (animation_counter % 5 == 0)
-		player.name = frame2;
-
 	bool should_swap_x = !moving_stage_x;
 	bool should_swap_y = !moving_stage_y;
 	float delta_x = 0.0;
 	float delta_y = 0.0;
 	float player_delta_x = 0.0;
 	float player_delta_y = 0.0;
+	string direction;
 	switch (key)
 	{
 	case 'w':
-		delta_y = -15.0;
-		if (player.name != "frame3.png" && player.name != "frame4.png")
-			player.name = "frame3.png";
-			
-		frame1 = "frame3.png";
-		frame2 = "frame4.png";
+		delta_y = round(-walk_speed);
+		direction = "up";
 		break;
 
 	case 's':
-		delta_y = 15.0;
-		if (player.name != "frame1.png" && player.name != "frame2.png")
-			player.name = "frame1.png";
-
-		frame1 = "frame1.png";
-		frame2 = "frame2.png";
+		delta_y = round(walk_speed);
+		direction = "down";
 		break;
 
 	case 'a':
-		delta_x = 15.0;
-		if (player.name != "frame7.png" && player.name != "frame8.png")
-			player.name = "frame7.png";
-
-		frame1 = "frame7.png";
-		frame2 = "frame8.png";
+		delta_x = round(walk_speed);
+		direction = "left";
 		break;
 
 	case 'd':
-		delta_x = -15.0;
-		if (player.name != "frame5.png" && player.name != "frame6.png")
-			player.name = "frame5.png";
-
-		frame1 = "frame5.png";
-		frame2 = "frame6.png";
+		delta_x = round(-walk_speed);
+		direction = "right";
 		break;
 	}
+
+	if (animation_counter % 5 == 0)
+		player.step(direction);
 
 	if (moving_stage_x)
 	{
@@ -220,10 +411,10 @@ void MMO::press_key(unsigned char key)
 
 	if (moving_stage_y)
 	{
-		if (left_bottom->y1 + delta_y > 0.0)
+		if (left_bottom->y1 + delta_y > chat_height)
 		{
-			player_delta_y = delta_y + left_bottom->y1;
-			delta_y = -left_bottom->y1;
+			player_delta_y = delta_y + left_bottom->y1 - chat_height;
+			delta_y = -(left_bottom->y1 - chat_height);
 			moving_stage_y = false;
 		}
 
@@ -281,18 +472,34 @@ void MMO::press_key(unsigned char key)
 	if (player.x2 - player_delta_x > 1920.0)
 		player_delta_x = player.x2 - 1920.0;
 
-	if (player.y1 - player_delta_y < 56.0)
-		player_delta_y = player.y1 - 56.0;
+	if (player.y1 - player_delta_y < chat_height)
+		player_delta_y = player.y1 - chat_height;
 
-	if (player.y2 - player_delta_y > 1044.0)
-		player_delta_y = player.y2 - 1044.0;
+	if (player.y2 - player_delta_y > 1080)
+		player_delta_y = player.y2 - 1080;
 
-	for (int i = 0; i < bounding_boxes.size(); ++i) //TODO multiple intersections at once?
+	int start, end, inc;
+	if (direction == "up") //otherwise you jump past 1-pixel boxes while walking up
+	{
+		start = bounding_boxes.size() - 1;
+		end = -1;
+		inc = -1;
+	}
+
+	else
+	{
+		start = 0;
+		end = bounding_boxes.size();
+		inc = 1;
+	}
+
+	int ladder_index = -1;
+	for (int i = start; i != end; i += inc) //TODO colliding with multiple boxes at once?
 	{
 		bool intersected = false;
 		ScreenElement bb = bounding_boxes[i];
 		if (intersects(ScreenElement(bb.x1 + delta_x, bb.y1, bb.x2 + delta_x, bb.y2, ""), 
-			ScreenElement(player.x1 - player_delta_x, player.y1, player.x2 - player_delta_x, player.y2, "")))
+			ScreenElement(player.x1 - player_delta_x, player.y1, player.x2 - player_delta_x, player.y1 + 3, "")) && !ignore_collision)
 		{
 			intersected = true;
 			if (player.x2 <= bb.x1)
@@ -321,12 +528,12 @@ void MMO::press_key(unsigned char key)
 		}
 
 		if (intersects(ScreenElement(bb.x1, bb.y1 + delta_y, bb.x2, bb.y2 + delta_y, ""),
-			ScreenElement(player.x1, player.y1 - player_delta_y, player.x2, player.y2 - player_delta_y, "")))
+			ScreenElement(player.x1, player.y1 - player_delta_y, player.x2, player.y1 - player_delta_y + 3, "")) && !ignore_collision)
 		{
 			intersected = true;
-			if (player.y2 <= bb.y1)
+			if (player.y1 + 3 <= bb.y1)
 			{
-				float target = bb.y1 - player.y2;
+				float target = bb.y1 - (player.y1 + 3);
 				float to_go = abs(delta_y) + abs(player_delta_y) - target;
 				delta_y += to_go;
 				if (delta_y >= 0.0)
@@ -349,15 +556,30 @@ void MMO::press_key(unsigned char key)
 			}
 		}
 
-		if (intersected)
+		if (intersected && bb.name == "ladder") //start zoom
 		{
-			zoom_animation = true;
-			no_movement = true;
+			ladder_index = i;
 		}
 	}
 
 	player.translate(-player_delta_x, -player_delta_y);
 	translate_stage(delta_x, delta_y);
+	if (ladder_index != -1)
+	{
+		ladder_box = bounding_boxes[ladder_index];
+		zoom_animation = true;
+		no_movement = true;
+		player_to_center_x = ladder_box.x1 + ((ladder_box.x2 - ladder_box.x1) / 2) - ((player.x2 - player.x1) / 2) - player.x1;
+		player_to_center_y = ladder_box.y1 + ((ladder_box.y2 - ladder_box.y1) / 2) - ((player.y2 - player.y1) / 2) - player.y1;
+	}
+
+	total_distance += abs(player_delta_x == 0 ? 0 : walk_speed) + abs(player_delta_y == 0 ? 0 : walk_speed) + abs(delta_x == 0 ? 0 : walk_speed) + abs(delta_y == 0 ? 0 : walk_speed);
+	if (total_distance >= 120)
+	{
+		parent->sound_manager->play_sound("step.wav");
+		total_distance = 0;
+	}
+
 	for (int i = 0; i < warp_boxes.size(); ++i)
 	{
 		if (inside(player, warp_boxes[i]))
@@ -367,13 +589,45 @@ void MMO::press_key(unsigned char key)
 		}
 	}
 
+	if (player.y2 >= 700 && current_level == "underground.txt" && key == 'w')
+	{
+		parent->go_to_flying = true;
+		keys_pressed['w'] = false;
+		keys_pressed['a'] = false;
+		keys_pressed['s'] = false;
+		keys_pressed['d'] = false;
+	}
+
 	mouse_moved(0, 0);
+}
+
+void MMO::mouse_clicked(int button, int state, int x, int y)
+{
+	if (!swinging_sword && current_level != "underground.txt" && current_level != "mmo.txt")
+	{
+		swinging_sword = true;
+		sword_counter = 0;
+		no_movement = true;
+		player.swing();
+	}
 }
 
 void MMO::animate()
 {
 	if (app_state == 0)
 		return;
+
+	if (animating_stage)
+	{
+		translate_stage(0, 10);
+		if (background_images[0].y1 >= 0)
+		{
+			animating_stage = false;
+			no_movement = false;
+			moving_stage_x = true;
+			moving_stage_y = true;
+		}
+	}
 	
 	if (current_level == "mmo.txt")
 	{
@@ -392,11 +646,38 @@ void MMO::animate()
 
 		if (zoom_animation)
 		{
-			scale_x += 0.0001;
-			scale_y += 0.0001;
-		}
+			if (player_to_center_x != 0)
+				player_to_center_x -= copysign(abs(player_to_center_x) < 2 ? abs(player_to_center_x) : 2, player_to_center_x);
 
-		return;
+			if (player_to_center_y != 0)
+				player_to_center_y -= copysign(abs(player_to_center_y) < 2 ? abs(player_to_center_y) : 2, player_to_center_y);
+
+			scale_x += 0.007;
+			scale_y += 0.007;
+			percent_of_centering += 0.02;
+			if (percent_of_centering >= 1.0)
+				percent_of_centering = 1.0;
+
+			zoom_counter++;
+			if (zoom_counter >= 7 * 60)
+			{
+				zoom_animation = false;
+				animating_stage = true;
+				load_level("underground.txt");
+				translate_stage(0, -1300);
+			}
+		}
+	}
+
+	if (swinging_sword)
+	{
+		sword_counter++;
+		if (sword_counter > 9)
+		{
+			swinging_sword = false;
+			player.normal();
+			no_movement = false;
+		}
 	}
 	
 	if (playing_warping_animation)
@@ -427,6 +708,36 @@ void MMO::animate()
 			animated_components[i].x2 = -500 + delta;
 		}
 	}
+
+	animation_counter++;
+	int yvector = (keys_pressed['w'] ? 1 : 0) + (keys_pressed['s'] ? -1 : 0);
+	int xvector = (keys_pressed['d'] ? 1 : 0) + (keys_pressed['a'] ? -1 : 0);
+	int old_speed = walk_speed;
+	if (yvector != 0 && xvector != 0)
+		walk_speed /= sqrt(2.0);
+
+	if (keys_pressed['w'])
+		process_key('w');
+
+	if (keys_pressed['a'])
+		process_key('a');
+
+	if (keys_pressed['s'])
+		process_key('s');
+
+	if (keys_pressed['d'])
+		process_key('d');
+
+	walk_speed = old_speed;
+	parent->mmo_stage_x1 = background_images[0].x1;
+	parent->mmo_stage_y1 = background_images[0].y1;
+	parent->mmo_player_x1 = player.x1;
+	parent->mmo_player_y1 = player.y1;
+}
+
+void MMO::add_chat()
+{
+	parent->screen_elements.insert(parent->screen_elements.end(), make_unique<HelpCenter>(0.0, 0.0, 1920.0, chat_height, "edges.bmp", parent, MMO_GAME, true));
 }
 
 void MMO::add_children()

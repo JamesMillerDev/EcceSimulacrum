@@ -8,6 +8,7 @@ struct ScrollBar : public ScreenElement
 {
     int prev_mouse_x;
     int prev_mouse_y;
+	float min_y, max_y;
     bool being_dragged;
 	bool glowing = false;
     ScrollPanel* scroll_panel;
@@ -19,6 +20,12 @@ struct ScrollBar : public ScreenElement
 	void mouse_off();
 	void take_focus();
 	void draw(TextureManager* texture_manager);
+	float range();
+	void animate();
+	bool animating = false;
+	int frames = 0;
+	float dragging_height = 0;
+	float fall_speed, speed_sign, to_traverse, traversed;
 };
 
 #endif

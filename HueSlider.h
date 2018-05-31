@@ -43,8 +43,28 @@ struct HueSlider : public ScreenElement
 		arrow.draw(texture_manager);
 		glPopMatrix();
 		glDisable(GL_TEXTURE_2D);
-		glRasterPos2f(x1, y1);
-		glDrawPixels(x2 - x1, y2 - y1, GL_RGBA, GL_UNSIGNED_BYTE, image);
+		if (x1 < 0 || y1 < 0)
+		{
+			int x_loss = x1 < 0 ? x1 : 0;
+			int y_loss = y1 < 0 ? y1 : 0;
+			int new_temp_width = (int)(x2 - x1) + x_loss;
+			int new_temp_height = (int)(y2 - y1) + y_loss;
+			glPixelStorei(GL_UNPACK_ROW_LENGTH, x2 - x1);
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, -x_loss);
+			glPixelStorei(GL_UNPACK_SKIP_ROWS, -y_loss);
+			glRasterPos2f(x_loss != 0 ? 0.0 : x1, y_loss != 0 ? 0.0 : y1);
+			glDrawPixels(new_temp_width, new_temp_height, GL_RGBA, GL_UNSIGNED_BYTE, image);
+			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+			glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+		}
+
+		else
+		{
+			glRasterPos2f(x1, y1);
+			glDrawPixels(x2 - x1, y2 - y1, GL_RGBA, GL_UNSIGNED_BYTE, image);
+		}
+
 		glEnable(GL_TEXTURE_2D);
 	}
 
@@ -57,7 +77,7 @@ struct HueSlider : public ScreenElement
 		}
 
 		pos_y = y - y1;
-		canvas->h_box->type_into(to_string(pos_y));
+		canvas->h_box->type_into(to_string((int)((float)pos_y / (y2 - y1) * 360.0)));
 		mouse_held = true;
 	}
 
@@ -73,12 +93,12 @@ struct HueSlider : public ScreenElement
 		if (pos_y < 0)
 			pos_y = 0;
 
-		canvas->h_box->type_into(to_string(pos_y));
+		canvas->h_box->type_into(to_string((int)((float)pos_y / (y2 - y1) * 360.0)));
 	}
 
 	void animate()
 	{
-		pos_y = atof(canvas->h_box->text.c_str());
+		pos_y = atof(canvas->h_box->text.c_str()) / 360.0 * (y2 - y1);
 	}
 
 	~HueSlider()
