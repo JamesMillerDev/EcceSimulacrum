@@ -1570,9 +1570,6 @@ void Computer::mouse_moved(int x, int y, ScreenElement* do_not_inform, bool no_s
 		cursor = "cursor.png";
 	}
 
-	if (x != prev_mouse_x || y != prev_mouse_y)
-		cout << "editing mouse\n";
-
 	prev_mouse_x = x;
 	prev_mouse_y = y;
 }

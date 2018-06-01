@@ -25,7 +25,7 @@ struct shadow_rect
 	shadow_rect(float _x1, float _x2, float _y1, float _y2, float _alpha) : x1(_x1), x2(_x2), y1(_y1), y2(_y2), alpha(_alpha) {}
 };
 
-enum GameState {STATE_AWAKENING, STATE_NO_COMPUTER, STATE_WALKING, STATE_COMPUTER, STATE_PEEING, STATE_GETTING_UP, STATE_FLYING, STATE_LOADING};
+enum GameState {STATE_AWAKENING, STATE_NO_COMPUTER, STATE_WALKING, STATE_COMPUTER, STATE_GETTING_UP, STATE_FLYING, STATE_LOADING};
 GameState game_state = STATE_LOADING;
 std::unique_ptr<Camera> camera;
 std::unique_ptr<TextureManager> texture_manager;
@@ -570,7 +570,6 @@ void init_texture()
 	texture_manager->load_texture("textfield.png");
 	texture_manager->load_texture("xbutton.png");
 	texture_manager->load_texture("search.png", false, true);
-	texture_manager->load_texture("browserplan.png");
 	texture_manager->load_texture("test2.png");
 	texture_manager->load_texture("white.png", true);
     texture_manager->load_texture("icon_internet.png");
@@ -715,7 +714,6 @@ void init_texture()
 	texture_manager->load_texture("vacation.png", true);
 	texture_manager->load_texture("vegetables.jpg", true);
 	texture_manager->load_texture("sleepy.png");
-	texture_manager->load_texture("itemtitle.png");
 	texture_manager->load_texture("greyout.png", true);
 	texture_manager->load_texture("browserdialog.png", true);
 	texture_manager->load_texture("browserok.png");
@@ -993,8 +991,6 @@ void init_texture()
 	texture_manager->load_texture("allfields.png");
 	texture_manager->load_texture("advertising.png");
 	texture_manager->load_texture("redalien.png");
-	//for (int i = 1; i <= 20; ++i)
-	//	texture_manager->load_texture("itemtitle1" + to_string(i) + ".png");
 	texture_manager->load_texture("firstpage.png");
 	texture_manager->load_texture("thread1.png");
 	for (int i = 0; i <= 20; ++i)
@@ -1082,11 +1078,6 @@ void init_texture()
 	texture_manager->load_texture("contest2.png");
 	texture_manager->load_texture("contest3.png");
 	texture_manager->load_texture("contest4.png");
-	texture_manager->load_texture("comments0.png");
-	texture_manager->load_texture("comments1.png");
-	texture_manager->load_texture("comments2.png");
-	texture_manager->load_texture("comments3.png");
-	texture_manager->load_texture("comments4.png");
 	texture_manager->load_texture("secondplace.png");
 	texture_manager->load_texture("wasd.png");
 	texture_manager->load_texture("sleepytablet.png");
@@ -2041,7 +2032,6 @@ void passive_motion_callback(int x, int y)
 
 void mouse_callback(int button, int state, int x, int y)
 {
-	//cout << to_string(x) + ", " + to_string(glutGet(GLUT_WINDOW_HEIGHT) - y) + "\n";
 	if (game_state == STATE_COMPUTER && !do_pause_menu)
 		computer->mouse_clicked(button, state, x, y);
 

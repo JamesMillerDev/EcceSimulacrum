@@ -632,14 +632,6 @@ void TextField::draw(TextureManager* texture_manager)
 
 	//text = "Hello, world!";
 	string temp_text;
-	/*if (password)
-	{
-		temp_text = text;
-		//text = string('*', text.size()); TODO find out WTF is going on with this
-		for (int i = 0; i < text.size(); ++i)
-			text[i] = '*';
-	}*/
-
 	bool do_filler = false;
 	if (!has_focus && text == "" && filler_text != "")
 	{

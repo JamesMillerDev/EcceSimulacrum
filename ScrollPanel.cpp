@@ -302,8 +302,6 @@ ScrollPanel::ScrollPanel(float _x1, float _y1, float _x2, float _y2, Computer* _
 
 	layout["forumhome"] = { pair<int, string>(0, "header.png"), pair<int, string>(0, "header.png"), pair<int, string>(0, "header.png"), pair<int, string>(0, "header.png"), pair<int, string>(0, "header.png") };
 	vector<pair<int, string>> reddit_layout;
-	//for (int i = 1; i <= 20; ++i)
-	//	reddit_layout.push_back(pair<int, string>(0, "itemtitle1" + to_string(i) + ".png"));
 
 	reddit_layout.push_back(pair<int, string>(0, "firstpage.png"));
 	reddit_layout.push_back(pair<int, string>(-738, "sleepyfooter.png"));
@@ -2222,7 +2220,6 @@ void ScrollPanel::animate()
 			browser_key.death_counter--;
 
 		scroll_page((browser_key.key == 3 || browser_key.key == KEY_UP) ? -browser_key.velocity : browser_key.velocity);
-		cout << "velocity " << browser_key.velocity << endl;
 		if (browser_key.death_counter == 0)
 			browser_key = BrowserKey();
 	}
