@@ -1,18 +1,20 @@
 #ifndef TEXTURE_MANAGER
 #define TEXTURE_MANAGER
 
+#include "GameParams.h"
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <string> 
 #include <map>
 #include <unordered_map>
 #include <string>
 #include "IL/il.h"
 #include "IL/ilu.h"
-#include "RGBpixmap.h"
-#include "GameParams.h"
 #include "ft2build.h"
 #include FT_FREETYPE_H
 
-using std::string;
-using std::map;
+using namespace std;
 
 class TextureManager
 {

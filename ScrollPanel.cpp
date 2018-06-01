@@ -80,7 +80,7 @@ ScrollPanel::ScrollPanel(float _x1, float _y1, float _x2, float _y2, Computer* _
 	name = "white.png";
 	num_break_points = 2;
 	big_glass_height = 1200.0;
-	do_whitelist_check = false;
+	do_whitelist_check = true;
 	surrender_focus_on_up_click = false;
 	animation_function = []() {};
 	if (!no_extras)
