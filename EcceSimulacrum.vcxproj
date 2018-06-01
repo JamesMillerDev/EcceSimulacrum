@@ -96,7 +96,6 @@
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="PowerSymbol.cpp" />
     <ClCompile Include="RadioButton.cpp" />
-    <ClCompile Include="RGBpixmap.cpp" />
     <ClCompile Include="ScrollBar.cpp" />
     <ClCompile Include="ScrollingMessage.cpp" />
     <ClCompile Include="ScrollPanel.cpp" />
@@ -157,7 +156,6 @@
     <ClInclude Include="RectUtilities.h" />
     <ClInclude Include="ReflectedObject.h" />
     <ClInclude Include="Resizer.h" />
-    <ClInclude Include="RGBpixmap.h" />
     <ClInclude Include="RotatingBox.h" />
     <ClInclude Include="SatLumSquare.h" />
     <ClInclude Include="ScrollBar.h" />
