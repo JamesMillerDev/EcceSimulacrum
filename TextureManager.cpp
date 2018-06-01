@@ -98,16 +98,6 @@ void TextureManager::load_texture(string name, bool mips, bool retain_pixel_data
 		memcpy(data, pixels, sizeof(GLubyte) * width * height * 4);
 		iluFlipImage();
 		pixel_data[name] = data;
-		if (name == "print.png")
-		{
-			for (int k = 0; k < width * height * 4; k += 1920 * 4)
-			{
-				cout << (int) data[k] << " ";
-				cout << (int) data[k + 1] << " ";
-				cout << (int) data[k + 2] << " ";
-				cout << (int) data[k + 3] << "\n";
-			}
-		}
 	}
 }
 

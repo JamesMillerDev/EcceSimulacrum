@@ -12,15 +12,12 @@ struct Video : public ScreenElement
 	void draw(TextureManager* texture_manager);
 	void animate();
 	~Video();
-	void press_key(unsigned char key);
-	void release_key(unsigned char key);
 	GLuint texture;
-	int current_frame = 1000;//1; //TODO 0?
+	int current_frame = 1;//1; //TODO 0?
 	PAVISTREAM stream;
 	PGETFRAME frame_object;
 	unsigned char* data = 0;
 	int width, height;
-	map<unsigned char, bool> is_key_pressed;
 };
 
 #endif
