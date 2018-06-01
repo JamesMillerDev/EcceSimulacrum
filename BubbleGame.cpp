@@ -739,7 +739,7 @@ void BubbleGame::animate()
 
 								score_to_give = 20;
 								kill_alien(target);
-								if (rand() % 1 == 0)
+								if (rand() % 100 == 0)
 								{
 									SpaceGameObject health_pickup(target->x1, target->y1, target->x1 + 100, target->y1 + 100, "energy.png", 6);
 									to_add.push_back(health_pickup);
