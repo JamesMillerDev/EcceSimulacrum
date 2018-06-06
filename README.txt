@@ -2,7 +2,7 @@ For gameplay video see
 https://www.youtube.com/watch?v=ht9LJn0BZRs
 
 For downloadable game see
-https://www.dropbox.com/s/d83b25rb7raxr6a/ecce.zip?dl=0
+https://www.dropbox.com/s/3wt1pq8fz5qifwx/ecce.zip?dl=0
 
 Open the folder and run EcceSimulacrum.exe
 
